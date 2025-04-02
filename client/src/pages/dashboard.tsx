@@ -53,7 +53,7 @@ export default function Dashboard() {
     <MainLayout>
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-800">Gerenciamento de Segurança</h1>
+        <h1 className="text-2xl font-bold text-slate-800">CertGuard - Dashboard</h1>
         <p className="text-slate-600 mt-1">
           Configure as políticas de segurança e controle de acesso aos certificados
         </p>

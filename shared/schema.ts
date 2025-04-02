@@ -101,7 +101,12 @@ export const insertAccessPolicySchema = createInsertSchema(accessPolicies).omit(
 export const insertCertificateToPolicySchema = createInsertSchema(certificateToPolicy).omit({ id: true });
 export const insertCertificateToGroupSchema = createInsertSchema(certificateToGroup).omit({ id: true });
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, timestamp: true });
-export const insertScheduleSchema = createInsertSchema(schedules).omit({ id: true, createdAt: true });
+export const insertScheduleSchema = createInsertSchema(schedules)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    startDate: z.string().transform(val => new Date(val)),
+    endDate: z.string().optional().transform(val => val ? new Date(val) : undefined),
+  });
 
 // Types
 export type User = typeof users.$inferSelect;

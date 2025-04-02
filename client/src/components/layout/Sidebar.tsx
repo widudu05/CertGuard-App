@@ -41,7 +41,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
             <ShieldCheck className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-800">Whom.doc9</h1>
+            <h1 className="text-xl font-bold text-slate-800">CertGuard</h1>
             <p className="text-xs text-slate-500">Gerenciamento de Certificados</p>
           </div>
         </div>
