@@ -21,14 +21,33 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Search, PlusCircle } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { 
+  Search, 
+  PlusCircle, 
+  MoreHorizontal, 
+  Edit, 
+  Trash2, 
+  Shield, 
+  Users, 
+  FileCheck 
+} from "lucide-react";
 import CertificateForm from "@/components/certificates/CertificateForm";
 import DeleteConfirmation from "@/components/certificates/DeleteConfirmation";
+import PolicyAssignment from "@/components/certificates/PolicyAssignment";
 
 export default function Certificates() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isPolicyDialogOpen, setIsPolicyDialogOpen] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | undefined>(undefined);
 
   const { data: certificates, isLoading } = useQuery({
@@ -49,6 +68,11 @@ export default function Certificates() {
   const handleAddNew = () => {
     setSelectedCertificate(undefined);
     setIsFormOpen(true);
+  };
+  
+  const handleManagePolicies = (certificate: Certificate) => {
+    setSelectedCertificate(certificate);
+    setIsPolicyDialogOpen(true);
   };
 
   const filteredCertificates = certificates?.filter((cert: Certificate) =>
@@ -128,21 +152,41 @@ export default function Certificates() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(cert)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleDelete(cert)}
-                      >
-                        Excluir
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Abrir menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleEdit(cert)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar certificado
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleManagePolicies(cert)}>
+                            <Shield className="mr-2 h-4 w-4" />
+                            Gerenciar políticas
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Users className="mr-2 h-4 w-4" />
+                            Gerenciar grupos
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <FileCheck className="mr-2 h-4 w-4" />
+                            Ver histórico de uso
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleDelete(cert)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir certificado
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -159,7 +203,7 @@ export default function Certificates() {
         </CardContent>
       </Card>
       
-      {/* Modal do Formulário */}
+      {/* Modais */}
       {isFormOpen && (
         <CertificateForm
           isOpen={isFormOpen}
@@ -168,11 +212,18 @@ export default function Certificates() {
         />
       )}
       
-      {/* Modal de Confirmação de Exclusão */}
       {isDeleteDialogOpen && selectedCertificate && (
         <DeleteConfirmation
           isOpen={isDeleteDialogOpen}
           onClose={() => setIsDeleteDialogOpen(false)}
+          certificate={selectedCertificate}
+        />
+      )}
+      
+      {isPolicyDialogOpen && selectedCertificate && (
+        <PolicyAssignment
+          isOpen={isPolicyDialogOpen}
+          onClose={() => setIsPolicyDialogOpen(false)}
           certificate={selectedCertificate}
         />
       )}
