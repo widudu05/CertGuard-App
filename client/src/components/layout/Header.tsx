@@ -3,6 +3,7 @@ import { Menu, Bell, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { getInitials } from "@/lib/utils";
+import logoImage from "../../assets/logo.webp";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -17,19 +18,25 @@ export default function Header({ onToggleSidebar, user }: HeaderProps) {
   return (
     <header className="bg-white border-b border-slate-200 shadow-sm">
       <div className="flex items-center justify-between px-6 py-3">
-        {/* Mobile Menu Toggle */}
-        <button
-          onClick={onToggleSidebar}
-          className="md:hidden text-slate-600 focus:outline-none"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
+        {/* Logo & Mobile Menu Toggle */}
+        <div className="flex items-center">
+          <button
+            onClick={onToggleSidebar}
+            className="md:hidden text-slate-600 focus:outline-none mr-3"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <div className="flex items-center">
+            <img src={logoImage} alt="CertGuard Logo" className="h-10 w-auto mr-2" />
+            <span className="text-xl font-bold text-slate-800 hidden md:block">CertGuard</span>
+          </div>
+        </div>
 
         {/* Search */}
         <div className="relative md:ml-4 hidden md:block">
           <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
           </span>
           <Input 

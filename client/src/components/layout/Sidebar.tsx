@@ -9,6 +9,7 @@ import {
   FileText, 
   Settings 
 } from "lucide-react";
+import logoImage from "../../assets/logo.webp";
 
 const navigationItems = [
   { name: "Dashboard", path: "/", icon: LayoutDashboard },
@@ -36,14 +37,12 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
     >
       {/* Logo & Brand */}
       <div className="p-4 border-b border-slate-200">
-        <div className="flex items-center">
-          <div className="rounded-md bg-primary-600 p-2 mr-3">
-            <ShieldCheck className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-800">CertGuard</h1>
-            <p className="text-xs text-slate-500">Gerenciamento de Certificados</p>
-          </div>
+        <div className="flex items-center justify-center">
+          <img src={logoImage} alt="CertGuard Logo" className="h-16 w-auto" />
+        </div>
+        <div className="mt-2 text-center">
+          <h1 className="text-xl font-bold text-slate-800">CertGuard</h1>
+          <p className="text-xs text-slate-500">Gerenciamento de Certificados</p>
         </div>
       </div>
 
