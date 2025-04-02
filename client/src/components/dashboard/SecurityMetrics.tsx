@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { SecurityMetric, SecurityRecommendation } from "@/lib/types";
 import { Progress } from "@/components/ui/progress";
-import { ExclamationTriangleIcon, InfoIcon } from "lucide-react";
+import { AlertTriangle, Info } from "lucide-react";
 
 const securityMetrics: SecurityMetric[] = [
   {
@@ -98,7 +98,9 @@ export default function SecurityMetrics() {
             <span className="text-sm font-medium text-slate-700">Índice de Segurança</span>
             <span className="text-sm font-semibold text-green-600">82/100</span>
           </div>
-          <Progress value={82} className="h-2.5" />
+          <div className="relative h-2.5 rounded-full bg-slate-200 overflow-hidden">
+            <div className="absolute h-full bg-green-500" style={{ width: '82%' }} />
+          </div>
           <p className="mt-2 text-xs text-slate-500">
             Sua pontuação de segurança está boa, mas pode melhorar.
           </p>
@@ -113,13 +115,12 @@ export default function SecurityMetrics() {
                   {metric.label}
                 </span>
               </div>
-              <Progress
-                value={metric.value}
-                className={`h-1.5 ${
-                  metric.value < 50 ? "bg-slate-200" : "bg-slate-200"
-                }`}
-                indicatorClassName={getColorForValue(metric.value, metric.color)}
-              />
+              <div className="relative h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                <div 
+                  className={`absolute h-full ${getColorForValue(metric.value, metric.color)}`} 
+                  style={{ width: `${metric.value}%` }}
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -130,9 +131,9 @@ export default function SecurityMetrics() {
             {recommendations.map((rec, index) => (
               <li key={index} className="flex items-start">
                 {rec.type === "warning" ? (
-                  <ExclamationTriangleIcon className="h-3.5 w-3.5 text-amber-500 mt-0.5 mr-2" />
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 mr-2" />
                 ) : (
-                  <InfoIcon className="h-3.5 w-3.5 text-primary-500 mt-0.5 mr-2" />
+                  <Info className="h-3.5 w-3.5 text-primary-500 mt-0.5 mr-2" />
                 )}
                 <span>{rec.text}</span>
               </li>

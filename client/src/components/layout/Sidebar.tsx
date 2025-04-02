@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   LayoutDashboard, 
-  Certificate, 
+  FileCheck, 
   Users, 
   ShieldCheck, 
   Clock, 
@@ -12,7 +12,7 @@ import {
 
 const navigationItems = [
   { name: "Dashboard", path: "/", icon: LayoutDashboard },
-  { name: "Certificados", path: "/certificates", icon: Certificate },
+  { name: "Certificados", path: "/certificates", icon: FileCheck },
   { name: "Usuários", path: "/users", icon: Users },
   { name: "Políticas de Acesso", path: "/access-policies", icon: ShieldCheck },
   { name: "Agendamentos", path: "/schedules", icon: Clock },
