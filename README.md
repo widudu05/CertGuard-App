@@ -9,6 +9,10 @@
 
 CertGuard é uma plataforma SaaS baseada em nuvem projetada para gerenciamento robusto de controle de acesso de entidades legais e fluxos de trabalho simplificados para certificados digitais.
 
+## Download
+
+Para baixar o projeto completo, [clique aqui](download/certguard_project.tar.gz).
+
 ## Recursos Principais
 
 - **Gestão de Certificados**: Suporte completo para diferentes tipos de certificados (A1 e A3) e entidades (PF e PJ).
