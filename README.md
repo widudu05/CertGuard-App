@@ -9,9 +9,6 @@
 
 CertGuard é uma plataforma SaaS baseada em nuvem projetada para gerenciamento robusto de controle de acesso de entidades legais e fluxos de trabalho simplificados para certificados digitais.
 
-## Download
-
-Para baixar o projeto completo, [clique aqui](download/certguard_project.tar.gz).
 
 ## Recursos Principais
 
@@ -39,8 +36,8 @@ Para baixar o projeto completo, [clique aqui](download/certguard_project.tar.gz)
 
 1. Clone este repositório:
    ```bash
-   git clone https://github.com/widudu05/CertGuard.git
-   cd CertGuard
+   git clone https://github.com/widudu05/CertGuard-App.git
+   cd CertGuard-App
    ```
 
 2. Instale as dependências:
