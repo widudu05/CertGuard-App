@@ -21,23 +21,34 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Search, PlusCircle } from "lucide-react";
+import CertificateForm from "@/components/certificates/CertificateForm";
+import DeleteConfirmation from "@/components/certificates/DeleteConfirmation";
 
 export default function Certificates() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedCertificate, setSelectedCertificate] = useState<Certificate | undefined>(undefined);
 
   const { data: certificates, isLoading } = useQuery({
     queryKey: ["/api/certificates"],
     queryFn: () => fetch("/api/certificates").then((res) => res.json()),
   });
 
-  const handleDelete = (id: number) => {
-    // In a real app, would show a confirmation dialog and call delete API
-    console.log(`Delete certificate with ID: ${id}`);
+  const handleDelete = (certificate: Certificate) => {
+    setSelectedCertificate(certificate);
+    setIsDeleteDialogOpen(true);
   };
 
-  const handleEdit = (id: number) => {
-    // In a real app, would navigate to edit page or open modal
-    console.log(`Edit certificate with ID: ${id}`);
+  const handleEdit = (certificate: Certificate) => {
+    setSelectedCertificate(certificate);
+    setIsFormOpen(true);
+  };
+  
+  const handleAddNew = () => {
+    setSelectedCertificate(undefined);
+    setIsFormOpen(true);
   };
 
   const filteredCertificates = certificates?.filter((cert: Certificate) =>
@@ -71,23 +82,13 @@ export default function Certificates() {
                 className="pl-10"
               />
               <div className="absolute left-3 top-2.5 text-slate-400">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
+                <Search className="w-4 h-4" />
               </div>
             </div>
-            <Button>Adicionar Certificado</Button>
+            <Button onClick={handleAddNew}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Adicionar Certificado
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -130,7 +131,7 @@ export default function Certificates() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEdit(cert.id)}
+                        onClick={() => handleEdit(cert)}
                       >
                         Editar
                       </Button>
@@ -138,18 +139,43 @@ export default function Certificates() {
                         variant="ghost"
                         size="sm"
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleDelete(cert.id)}
+                        onClick={() => handleDelete(cert)}
                       >
                         Excluir
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
+                {filteredCertificates?.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                      Nenhum certificado encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           )}
         </CardContent>
       </Card>
+      
+      {/* Modal do Formulário */}
+      {isFormOpen && (
+        <CertificateForm
+          isOpen={isFormOpen}
+          onClose={() => setIsFormOpen(false)}
+          certificate={selectedCertificate}
+        />
+      )}
+      
+      {/* Modal de Confirmação de Exclusão */}
+      {isDeleteDialogOpen && selectedCertificate && (
+        <DeleteConfirmation
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          certificate={selectedCertificate}
+        />
+      )}
     </MainLayout>
   );
 }
