@@ -47,8 +47,11 @@ const formSchema = z.object({
   name: z.string().min(3, {
     message: "Nome deve ter pelo menos 3 caracteres",
   }),
-  type: z.string().min(1, {
-    message: "Selecione um tipo de certificado",
+  type: z.enum(["A1", "A3"], {
+    message: "Selecione um tipo de certificado válido (A1 ou A3)",
+  }),
+  entityType: z.enum(["PF", "PJ"], {
+    message: "Selecione o tipo de entidade (Pessoa Física ou Jurídica)",
   }),
   userGroup: z.string().min(1, {
     message: "Selecione um grupo de usuários",
@@ -89,7 +92,8 @@ export default function CertificateForm({
   // Valores padrão do formulário
   const defaultValues = {
     name: "",
-    type: "",
+    type: "A1" as "A1", // Tipo A1 como padrão
+    entityType: "PF" as "PF", // Pessoa Física como padrão
     userGroup: "",
     expiresAt: "",
     allowedActions: {
@@ -115,9 +119,16 @@ export default function CertificateForm({
         encryption: certificate.allowedActions.includes("Criptografia"),
       };
 
+      // Consideramos certificados existentes como A1 para pessoa física como padrão
+      // quando importados do sistema anterior
+      const certType = (certificate.type === "A1" || certificate.type === "A3") 
+        ? certificate.type 
+        : "A1";
+      
       form.reset({
         name: certificate.name,
-        type: certificate.type,
+        type: certType as "A1" | "A3",
+        entityType: "PF" as "PF", // Definindo como Pessoa Física por padrão
         userGroup: "1", // Grupo padrão para edição
         expiresAt: certificate.expiresAt,
         allowedActions,
@@ -132,7 +143,7 @@ export default function CertificateForm({
 
   // Mutation para criar/atualizar certificado
   const mutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: CertificateFormValues) => {
       const allowedActions = [];
       if (data.allowedActions.signing) allowedActions.push("Assinatura");
       if (data.allowedActions.authentication) allowedActions.push("Autenticação");
@@ -141,6 +152,7 @@ export default function CertificateForm({
       const certificateData = {
         name: data.name,
         type: data.type,
+        entityType: data.entityType,
         expiresAt: data.expiresAt,
         allowedActions: allowedActions,
       };
@@ -213,34 +225,62 @@ export default function CertificateForm({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo de certificado" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Digital Signature">Assinatura Digital</SelectItem>
-                      <SelectItem value="Authentication">Autenticação</SelectItem>
-                      <SelectItem value="SSL/TLS">SSL/TLS</SelectItem>
-                      <SelectItem value="Document Signing">Assinatura de Documentos</SelectItem>
-                      <SelectItem value="Email Certificate">Certificado de Email</SelectItem>
-                      <SelectItem value="Code Signing">Assinatura de Código</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Certificado</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="A1">A1 (Software)</SelectItem>
+                        <SelectItem value="A3">A3 (Hardware)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      A1 - Armazenado no computador
+                      <br />
+                      A3 - Armazenado em dispositivo criptográfico
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="entityType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Entidade</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="PF">Pessoa Física</SelectItem>
+                        <SelectItem value="PJ">Pessoa Jurídica</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <FormField
               control={form.control}

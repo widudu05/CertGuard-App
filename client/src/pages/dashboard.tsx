@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import MainLayout from "@/components/layout/MainLayout";
 import StatusCard from "@/components/dashboard/StatusCard";
+import StatusCardDialog from "@/components/dashboard/StatusCardDialog";
 import SecurityFeatures from "@/components/dashboard/SecurityFeatures";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import CertificateQuickAdd from "@/components/dashboard/CertificateQuickAdd";
@@ -8,10 +10,20 @@ import SecurityMetrics from "@/components/dashboard/SecurityMetrics";
 import { StatusCardProps } from "@/lib/types";
 
 export default function Dashboard() {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState<"certificates" | "groups" | "policies" | "blocked">("certificates");
+  const [dialogTitle, setDialogTitle] = useState("");
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ["/api/stats"],
     queryFn: () => fetch("/api/stats").then((res) => res.json()),
   });
+
+  const handleCardClick = (type: "certificates" | "groups" | "policies" | "blocked", title: string) => {
+    setDialogType(type);
+    setDialogTitle(title);
+    setDialogOpen(true);
+  };
 
   // Fallback data if API isn't available yet
   const statusCards: StatusCardProps[] = [
@@ -22,6 +34,7 @@ export default function Dashboard() {
       color: "primary",
       trend: "12% em relação ao mês anterior",
       trendDirection: "up",
+      onClick: () => handleCardClick("certificates", "Certificados Ativos"),
     },
     {
       icon: "fa-users",
@@ -30,6 +43,7 @@ export default function Dashboard() {
       color: "secondary",
       trend: "4 grupos adicionados recentemente",
       trendDirection: "up",
+      onClick: () => handleCardClick("groups", "Grupos de Usuários"),
     },
     {
       icon: "fa-shield-halved",
@@ -38,6 +52,7 @@ export default function Dashboard() {
       color: "amber",
       trend: "3 novas restrições pendentes",
       trendDirection: "warning",
+      onClick: () => handleCardClick("policies", "Restrições Ativas"),
     },
     {
       icon: "fa-clock",
@@ -46,6 +61,7 @@ export default function Dashboard() {
       color: "red",
       trend: "5 nas últimas 24 horas",
       trendDirection: "up",
+      onClick: () => handleCardClick("blocked", "Acessos Bloqueados"),
     },
   ];
 
@@ -80,6 +96,14 @@ export default function Dashboard() {
           <SecurityMetrics />
         </div>
       </div>
+
+      {/* Status Card Dialog */}
+      <StatusCardDialog 
+        open={dialogOpen} 
+        onOpenChange={setDialogOpen} 
+        title={dialogTitle} 
+        type={dialogType}
+      />
     </MainLayout>
   );
 }

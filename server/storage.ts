@@ -198,29 +198,32 @@ export class MemStorage implements IStorage {
     // Demo certificates
     const adminCert = this.createCertificate({
       name: "Admin Cert #01",
-      type: "Digital Signature",
+      type: "A3",
+      entityType: "PF",
       data: "CERTIFICATE_DATA",
       expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       createdBy: admin.id,
-      allowedActions: ["sign", "authenticate", "nonRepudiation"]
+      allowedActions: ["Assinatura", "Autenticação", "Criptografia"]
     });
     
     const devCert = this.createCertificate({
       name: "Dev Team Cert #45",
-      type: "Code Signing",
+      type: "A1",
+      entityType: "PJ",
       data: "CERTIFICATE_DATA",
       expiresAt: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
       createdBy: admin.id,
-      allowedActions: ["sign", "authenticate"]
+      allowedActions: ["Assinatura", "Autenticação"]
     });
     
     const financeCert = this.createCertificate({
       name: "Finance Cert #12",
-      type: "Authentication",
+      type: "A3",
+      entityType: "PJ",
       data: "CERTIFICATE_DATA",
       expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
       createdBy: admin.id,
-      allowedActions: ["authenticate"]
+      allowedActions: ["Autenticação", "Criptografia"]
     });
     
     // Assign policies to certificates

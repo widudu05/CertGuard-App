@@ -1,12 +1,15 @@
 import { StatusCardProps } from "@/lib/types";
 import { getIconColor, getTrendIcon, getTrendColor } from "@/lib/utils";
 
-export default function StatusCard({ icon, title, value, color, trend, trendDirection }: StatusCardProps) {
+export default function StatusCard({ icon, title, value, color, trend, trendDirection, onClick }: StatusCardProps) {
   const iconColorClass = getIconColor(color);
   const trendColorClass = getTrendColor(trendDirection || "");
   
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 border border-slate-200">
+    <div 
+      className="bg-white rounded-lg shadow-sm p-6 border border-slate-200 transition-all hover:shadow-md cursor-pointer"
+      onClick={onClick}
+    >
       <div className="flex items-center">
         <div className={`p-3 rounded-full ${iconColorClass} mr-4`}>
           <i className={`fa-solid ${icon} text-xl`}></i>

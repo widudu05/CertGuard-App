@@ -129,6 +129,7 @@ export default function Certificates() {
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Tipo</TableHead>
+                  <TableHead>Entidade</TableHead>
                   <TableHead>Data de Emissão</TableHead>
                   <TableHead>Data de Expiração</TableHead>
                   <TableHead>Ações Permitidas</TableHead>
@@ -139,9 +140,43 @@ export default function Certificates() {
                 {filteredCertificates?.map((cert: Certificate) => (
                   <TableRow key={cert.id}>
                     <TableCell className="font-medium">{cert.name}</TableCell>
-                    <TableCell>{cert.type}</TableCell>
+                    <TableCell>
+                      <Badge className={`px-2 py-1 ${
+                        cert.type === "A1"
+                          ? "bg-blue-100 text-blue-700 hover:bg-blue-100"
+                          : "bg-purple-100 text-purple-700 hover:bg-purple-100"
+                      }`}>
+                        {cert.type === "A1" 
+                          ? "A1 - Software" 
+                          : "A3 - Hardware"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {cert.entityType ? (
+                        <Badge className={`px-2 py-1 ${
+                          cert.entityType === "PF"
+                            ? "bg-green-100 text-green-700 hover:bg-green-100"
+                            : "bg-amber-100 text-amber-700 hover:bg-amber-100"
+                        }`}>
+                          {cert.entityType === "PF" ? "Pessoa Física" : "Pessoa Jurídica"}
+                        </Badge>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </TableCell>
                     <TableCell>{formatDate(cert.issuedAt)}</TableCell>
-                    <TableCell>{formatDate(cert.expiresAt)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <span className={`h-2 w-2 rounded-full mr-2 ${
+                          new Date(cert.expiresAt) > new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                            ? "bg-green-500" // Mais de 30 dias para expirar
+                            : new Date(cert.expiresAt) > new Date()
+                              ? "bg-amber-500" // Menos de 30 dias para expirar
+                              : "bg-red-500" // Expirado
+                        }`} />
+                        {formatDate(cert.expiresAt)}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {cert.allowedActions.map((action, idx) => (
@@ -192,7 +227,7 @@ export default function Certificates() {
                 ))}
                 {filteredCertificates?.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                       Nenhum certificado encontrado.
                     </TableCell>
                   </TableRow>

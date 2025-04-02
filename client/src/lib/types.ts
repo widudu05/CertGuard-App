@@ -6,6 +6,7 @@ export interface StatusCardProps {
   color: 'primary' | 'secondary' | 'amber' | 'red';
   trend?: string;
   trendDirection?: 'up' | 'down' | 'warning';
+  onClick?: () => void;
 }
 
 export interface SecurityFeature {
@@ -47,7 +48,8 @@ export interface SecurityRecommendation {
 export interface Certificate {
   id: number;
   name: string;
-  type: string;
+  type: string; // Deve ser "A1" ou "A3"
+  entityType?: string; // Deve ser "PF" ou "PJ"
   issuedAt: string;
   expiresAt: string;
   createdBy: number;
@@ -56,7 +58,8 @@ export interface Certificate {
 
 export interface CertificateFormValues {
   name: string;
-  type: string;
+  type: "A1" | "A3"; // Tipos específicos A1 e A3
+  entityType: "PF" | "PJ"; // Pessoa Física ou Pessoa Jurídica
   userGroup: string;
   expiresAt: string;
   allowedActions: {

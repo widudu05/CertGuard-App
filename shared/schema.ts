@@ -32,7 +32,8 @@ export const userToGroup = pgTable("user_to_group", {
 export const certificates = pgTable("certificates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  type: text("type").notNull(),
+  type: text("type").notNull(), // A1 ou A3
+  entityType: text("entity_type"), // PF ou PJ
   data: text("data").notNull(),
   issuedAt: timestamp("issued_at").notNull().defaultNow(),
   expiresAt: timestamp("expires_at").notNull(),
