@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,21 +16,86 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ScheduleCard from "@/components/dashboard/ScheduleCard";
+import ScheduleForm from "@/components/schedules/ScheduleForm";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+
+interface Schedule {
+  id: number;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  startDate: string;
+  endDate?: string;
+  weekDays: {
+    monday: boolean;
+    tuesday: boolean;
+    wednesday: boolean;
+    thursday: boolean;
+    friday: boolean;
+    saturday: boolean;
+    sunday: boolean;
+  };
+  startTime: string;
+  endTime: string;
+  userGroupId?: number;
+}
 
 export default function Schedules() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [searchQuery, setSearchQuery] = useState("");
+  const [isScheduleFormOpen, setIsScheduleFormOpen] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState<Schedule | undefined>(undefined);
+  const [scheduleToDelete, setScheduleToDelete] = useState<Schedule | undefined>(undefined);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-  // In a real app, fetch schedules from the API
-  const { data: policies, isLoading } = useQuery({
-    queryKey: ["/api/access-policies"],
-    queryFn: () => fetch("/api/access-policies").then((res) => res.json()),
+  // Fetch schedules
+  const { data: schedules, isLoading } = useQuery({
+    queryKey: ["/api/schedules"],
+    queryFn: () => {
+      // Se não existir ainda uma API de agendamentos, use políticas como mock temporário
+      return fetch("/api/access-policies")
+        .then((res) => res.json())
+        .then((policies) => 
+          // Transformar políticas em formato de agendamentos
+          policies
+            .filter((policy: any) => policy.accessHours)
+            .map((policy: any) => ({
+              id: policy.id,
+              name: policy.name,
+              description: policy.description,
+              isActive: true,
+              startDate: new Date().toISOString(),
+              weekDays: {
+                monday: policy.accessHours.workDays,
+                tuesday: policy.accessHours.workDays,
+                wednesday: policy.accessHours.workDays,
+                thursday: policy.accessHours.workDays,
+                friday: policy.accessHours.workDays,
+                saturday: policy.accessHours.weekend,
+                sunday: policy.accessHours.weekend
+              },
+              startTime: policy.accessHours.startTime,
+              endTime: policy.accessHours.endTime,
+              userGroupId: 1 // Valor padrão para exemplo
+            }))
+        );
+    }
   });
 
-  // Mock schedules data based on access policies
-  const schedules = policies?.filter((policy: any) => policy.accessHours);
-
-  const filteredSchedules = schedules?.filter((schedule: any) =>
+  const filteredSchedules = schedules?.filter((schedule: Schedule) =>
     schedule.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -38,6 +103,56 @@ export default function Schedules() {
   const formattedDate = date
     ? format(date, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })
     : "";
+    
+  // Handlers
+  const handleAddSchedule = () => {
+    setSelectedSchedule(undefined);
+    setIsScheduleFormOpen(true);
+  };
+  
+  const handleEditSchedule = (schedule: Schedule) => {
+    setSelectedSchedule(schedule);
+    setIsScheduleFormOpen(true);
+  };
+  
+  const handleDeleteSchedule = (schedule: Schedule) => {
+    setScheduleToDelete(schedule);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  // Mutation para excluir agendamento
+  const deleteMutation = useMutation({
+    mutationFn: async (scheduleId: number) => {
+      const response = await fetch(`/api/schedules/${scheduleId}`, {
+        method: "DELETE",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Falha ao excluir o agendamento");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidar queries para recarregar dados
+      queryClient.invalidateQueries({ queryKey: ["/api/schedules"] });
+      
+      toast({
+        title: "Agendamento excluído",
+        description: "O agendamento foi excluído com sucesso.",
+      });
+      
+      setScheduleToDelete(undefined);
+      setIsDeleteDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Falha ao excluir o agendamento. ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
 
   return (
     <MainLayout>
@@ -47,6 +162,38 @@ export default function Schedules() {
           Defina janelas de tempo para o uso de certificados
         </p>
       </div>
+      
+      {/* Form de agendamento */}
+      {isScheduleFormOpen && (
+        <ScheduleForm
+          isOpen={isScheduleFormOpen}
+          onClose={() => setIsScheduleFormOpen(false)}
+          schedule={selectedSchedule}
+        />
+      )}
+      
+      {/* Diálogo de confirmação de exclusão */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmação</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o agendamento "{scheduleToDelete?.name}"?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => scheduleToDelete && deleteMutation.mutate(scheduleToDelete.id)}
+              className="bg-red-500 hover:bg-red-600"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
@@ -66,7 +213,7 @@ export default function Schedules() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
-                  <Button>Novo Agendamento</Button>
+                  <Button onClick={handleAddSchedule}>Novo Agendamento</Button>
                 </div>
               </div>
             </CardHeader>
@@ -81,8 +228,13 @@ export default function Schedules() {
                   {isLoading ? (
                     <div className="text-center p-8">Carregando agendamentos...</div>
                   ) : filteredSchedules?.length > 0 ? (
-                    filteredSchedules.map((schedule: any) => (
-                      <ScheduleCard key={schedule.id} schedule={schedule} />
+                    filteredSchedules.map((schedule: Schedule) => (
+                      <ScheduleCard 
+                        key={schedule.id} 
+                        schedule={schedule} 
+                        onEdit={handleEditSchedule}
+                        onDelete={handleDeleteSchedule}
+                      />
                     ))
                   ) : (
                     <div className="text-center p-8 text-slate-500">
@@ -184,7 +336,7 @@ export default function Schedules() {
                   <div className="text-sm text-amber-800">07:00 - 22:00</div>
                 </div>
 
-                <Button className="w-full" variant="outline">Criar Novo Horário</Button>
+                <Button className="w-full" variant="outline" onClick={handleAddSchedule}>Criar Novo Horário</Button>
               </div>
             </CardContent>
           </Card>

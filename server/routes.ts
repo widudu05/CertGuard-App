@@ -10,7 +10,8 @@ import {
   insertAccessPolicySchema,
   insertCertificateToPolicySchema,
   insertCertificateToGroupSchema,
-  insertAuditLogSchema
+  insertAuditLogSchema,
+  insertScheduleSchema
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -461,6 +462,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Schedule routes
+  app.get("/api/schedules", async (req: Request, res: Response) => {
+    try {
+      const schedules = await storage.listSchedules();
+      res.json(schedules);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching schedules" });
+    }
+  });
+
+  app.get("/api/schedules/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const schedule = await storage.getSchedule(id);
+      
+      if (!schedule) {
+        return res.status(404).json({ message: "Schedule not found" });
+      }
+      
+      res.json(schedule);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching schedule" });
+    }
+  });
+
+  app.post("/api/schedules", async (req: Request, res: Response) => {
+    try {
+      const scheduleInput = insertScheduleSchema.parse(req.body);
+      const schedule = await storage.createSchedule(scheduleInput);
+      res.status(201).json(schedule);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid schedule data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Error creating schedule" });
+    }
+  });
+
+  app.put("/api/schedules/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const scheduleInput = insertScheduleSchema.partial().parse(req.body);
+      const schedule = await storage.updateSchedule(id, scheduleInput);
+      
+      if (!schedule) {
+        return res.status(404).json({ message: "Schedule not found" });
+      }
+      
+      res.json(schedule);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid schedule data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Error updating schedule" });
+    }
+  });
+
+  app.delete("/api/schedules/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteSchedule(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Schedule not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting schedule" });
+    }
+  });
+
   // Stats endpoint for dashboard
   app.get("/api/stats", async (req: Request, res: Response) => {
     try {
@@ -469,11 +542,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const groups = await storage.listUserGroups();
       const policies = await storage.listAccessPolicies();
       const logs = await storage.listAuditLogs(100);
+      const schedules = await storage.listSchedules();
       
       const activeUsers = users.filter(u => u.isActive).length;
       const activeCertificates = certificates.length;
       const activeGroups = groups.length;
       const restrictionsCount = policies.length;
+      const schedulesCount = schedules.length;
       const blockedAccess = logs.filter(log => log.status === "Bloqueado").length;
       
       const stats = {
@@ -481,6 +556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         activeCertificates,
         activeGroups,
         restrictionsCount,
+        schedulesCount,
         blockedAccess,
         recentLogs: logs.slice(0, 10)
       };

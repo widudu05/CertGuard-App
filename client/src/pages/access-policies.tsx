@@ -18,9 +18,29 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import PolicyForm from "@/components/policies/PolicyForm";
 
 export default function AccessPolicies() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isPolicyFormOpen, setIsPolicyFormOpen] = useState(false);
+  const [selectedPolicy, setSelectedPolicy] = useState<AccessPolicy | undefined>(undefined);
+  const [policyToDelete, setPolicyToDelete] = useState<AccessPolicy | undefined>(undefined);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: policies, isLoading } = useQuery({
     queryKey: ["/api/access-policies"],
@@ -33,9 +53,53 @@ export default function AccessPolicies() {
   );
 
   const handleAddPolicy = () => {
-    // In a real app, would show a form modal or navigate to form page
-    console.log("Add policy clicked");
+    setSelectedPolicy(undefined);
+    setIsPolicyFormOpen(true);
   };
+  
+  const handleEditPolicy = (policy: AccessPolicy) => {
+    setSelectedPolicy(policy);
+    setIsPolicyFormOpen(true);
+  };
+  
+  const handleDeletePolicy = (policy: AccessPolicy) => {
+    setPolicyToDelete(policy);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  // Mutation para excluir política
+  const deleteMutation = useMutation({
+    mutationFn: async (policyId: number) => {
+      const response = await fetch(`/api/access-policies/${policyId}`, {
+        method: "DELETE",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Falha ao excluir a política");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidar queries para recarregar dados
+      queryClient.invalidateQueries({ queryKey: ["/api/access-policies"] });
+      
+      toast({
+        title: "Política excluída",
+        description: "A política foi excluída com sucesso.",
+      });
+      
+      setPolicyToDelete(undefined);
+      setIsDeleteDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Falha ao excluir a política. ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
 
   return (
     <MainLayout>
@@ -86,10 +150,19 @@ export default function AccessPolicies() {
                       </div>
                     </AccordionTrigger>
                     <div className="flex items-center space-x-2 mr-4">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditPolicy(policy)}
+                      >
                         Editar
                       </Button>
-                      <Button variant="outline" size="sm" className="text-red-600">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-red-600"
+                        onClick={() => handleDeletePolicy(policy)}
+                      >
                         Excluir
                       </Button>
                     </div>
@@ -166,6 +239,38 @@ export default function AccessPolicies() {
           )}
         </CardContent>
       </Card>
+      {/* Modal de formulário de política */}
+      <PolicyForm
+        isOpen={isPolicyFormOpen}
+        onClose={() => setIsPolicyFormOpen(false)}
+        policy={selectedPolicy}
+      />
+      
+      {/* Diálogo de confirmação de exclusão */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá excluir permanentemente a política "{policyToDelete?.name}".
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (policyToDelete) {
+                  deleteMutation.mutate(policyToDelete.id);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 }

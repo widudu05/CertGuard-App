@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, varchar, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar, json, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -77,6 +77,21 @@ export const auditLogs = pgTable("audit_logs", {
   timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
 
+// Schedules table
+export const schedules = pgTable("schedules", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  weekDays: jsonb("week_days").notNull(),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+  userGroupId: integer("user_group_id").references(() => userGroups.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export const insertUserGroupSchema = createInsertSchema(userGroups).omit({ id: true });
@@ -86,6 +101,7 @@ export const insertAccessPolicySchema = createInsertSchema(accessPolicies).omit(
 export const insertCertificateToPolicySchema = createInsertSchema(certificateToPolicy).omit({ id: true });
 export const insertCertificateToGroupSchema = createInsertSchema(certificateToGroup).omit({ id: true });
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, timestamp: true });
+export const insertScheduleSchema = createInsertSchema(schedules).omit({ id: true, createdAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -111,3 +127,6 @@ export type InsertCertificateToGroup = z.infer<typeof insertCertificateToGroupSc
 
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+
+export type Schedule = typeof schedules.$inferSelect;
+export type InsertSchedule = z.infer<typeof insertScheduleSchema>;

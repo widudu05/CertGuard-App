@@ -1,10 +1,11 @@
 import {
   users, userGroups, userToGroup, certificates, accessPolicies,
-  certificateToPolicy, certificateToGroup, auditLogs,
+  certificateToPolicy, certificateToGroup, auditLogs, schedules,
   type User, type InsertUser, type UserGroup, type InsertUserGroup,
   type UserToGroup, type InsertUserToGroup, type Certificate, type InsertCertificate,
   type AccessPolicy, type InsertAccessPolicy, type CertificateToPolicy, type InsertCertificateToPolicy,
-  type CertificateToGroup, type InsertCertificateToGroup, type AuditLog, type InsertAuditLog
+  type CertificateToGroup, type InsertCertificateToGroup, type AuditLog, type InsertAuditLog,
+  type Schedule, type InsertSchedule
 } from "@shared/schema";
 
 export interface IStorage {
@@ -58,6 +59,13 @@ export interface IStorage {
   listAuditLogs(limit?: number): Promise<AuditLog[]>;
   getAuditLogsByUser(userId: number): Promise<AuditLog[]>;
   getAuditLogsByCertificate(certificateId: number): Promise<AuditLog[]>;
+  
+  // Schedule operations
+  getSchedule(id: number): Promise<Schedule | undefined>;
+  createSchedule(schedule: InsertSchedule): Promise<Schedule>;
+  updateSchedule(id: number, schedule: Partial<InsertSchedule>): Promise<Schedule | undefined>;
+  deleteSchedule(id: number): Promise<boolean>;
+  listSchedules(): Promise<Schedule[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -69,6 +77,7 @@ export class MemStorage implements IStorage {
   private certificateToPolicyData: Map<number, CertificateToPolicy>;
   private certificateToGroupData: Map<number, CertificateToGroup>;
   private auditLogsData: Map<number, AuditLog>;
+  private schedulesData: Map<number, Schedule>;
   
   private userIdCounter: number;
   private userGroupIdCounter: number;
@@ -78,6 +87,7 @@ export class MemStorage implements IStorage {
   private certificateToPolicyIdCounter: number;
   private certificateToGroupIdCounter: number;
   private auditLogIdCounter: number;
+  private scheduleIdCounter: number;
   
   constructor() {
     this.usersData = new Map();
@@ -88,6 +98,7 @@ export class MemStorage implements IStorage {
     this.certificateToPolicyData = new Map();
     this.certificateToGroupData = new Map();
     this.auditLogsData = new Map();
+    this.schedulesData = new Map();
     
     this.userIdCounter = 1;
     this.userGroupIdCounter = 1;
@@ -97,6 +108,7 @@ export class MemStorage implements IStorage {
     this.certificateToPolicyIdCounter = 1;
     this.certificateToGroupIdCounter = 1;
     this.auditLogIdCounter = 1;
+    this.scheduleIdCounter = 1;
     
     // Initialize with some demo data
     this.initDemoData();
@@ -266,6 +278,64 @@ export class MemStorage implements IStorage {
       certificateId: 3,
       details: { system: "API de Pagamentos" },
       status: "Bloqueado"
+    });
+    
+    // Demo schedules
+    this.createSchedule({
+      name: "Horário Comercial",
+      description: "Acesso em horário comercial padrão",
+      isActive: true,
+      startDate: new Date().toISOString().split('T')[0],
+      weekDays: {
+        monday: true,
+        tuesday: true,
+        wednesday: true,
+        thursday: true,
+        friday: true,
+        saturday: false,
+        sunday: false
+      },
+      startTime: "08:00",
+      endTime: "18:00",
+      userGroupId: 1
+    });
+    
+    this.createSchedule({
+      name: "Acesso 24/7",
+      description: "Acesso contínuo para operações críticas",
+      isActive: true,
+      startDate: new Date().toISOString().split('T')[0],
+      weekDays: {
+        monday: true,
+        tuesday: true,
+        wednesday: true,
+        thursday: true,
+        friday: true,
+        saturday: true,
+        sunday: true
+      },
+      startTime: "00:00",
+      endTime: "23:59",
+      userGroupId: 2
+    });
+    
+    this.createSchedule({
+      name: "Suporte 24/7",
+      description: "Acesso 24 horas para equipe de suporte",
+      isActive: true,
+      startDate: new Date().toISOString().split('T')[0],
+      weekDays: {
+        monday: true,
+        tuesday: true,
+        wednesday: true,
+        thursday: true,
+        friday: true,
+        saturday: true,
+        sunday: true
+      },
+      startTime: "00:00",
+      endTime: "23:59",
+      userGroupId: 2
     });
   }
   
@@ -511,6 +581,36 @@ export class MemStorage implements IStorage {
     return Array.from(this.auditLogsData.values())
       .filter((log) => log.certificateId === certificateId)
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }
+  
+  // Schedule operations
+  async getSchedule(id: number): Promise<Schedule | undefined> {
+    return this.schedulesData.get(id);
+  }
+  
+  async createSchedule(scheduleData: InsertSchedule): Promise<Schedule> {
+    const id = this.scheduleIdCounter++;
+    const createdAt = new Date();
+    const schedule = { ...scheduleData, id, createdAt };
+    this.schedulesData.set(id, schedule);
+    return schedule;
+  }
+  
+  async updateSchedule(id: number, scheduleData: Partial<InsertSchedule>): Promise<Schedule | undefined> {
+    const existingSchedule = await this.getSchedule(id);
+    if (!existingSchedule) return undefined;
+    
+    const updatedSchedule = { ...existingSchedule, ...scheduleData };
+    this.schedulesData.set(id, updatedSchedule);
+    return updatedSchedule;
+  }
+  
+  async deleteSchedule(id: number): Promise<boolean> {
+    return this.schedulesData.delete(id);
+  }
+  
+  async listSchedules(): Promise<Schedule[]> {
+    return Array.from(this.schedulesData.values());
   }
 }
 

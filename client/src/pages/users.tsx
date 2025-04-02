@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import MainLayout from "@/components/layout/MainLayout";
-import { User } from "@/lib/types";
+import { User, UserGroup } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import UserForm from "@/components/users/UserForm";
+import UserGroupForm from "@/components/users/UserGroupForm";
 
 export default function Users() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isUserFormOpen, setIsUserFormOpen] = useState(false);
+  const [isGroupFormOpen, setIsGroupFormOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
+  const [selectedGroup, setSelectedGroup] = useState<UserGroup | undefined>(undefined);
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["/api/users"],
@@ -35,13 +41,23 @@ export default function Users() {
   );
 
   const handleAddUser = () => {
-    // In a real app, would show a form modal or navigate to form page
-    console.log("Add user clicked");
+    setSelectedUser(undefined);
+    setIsUserFormOpen(true);
+  };
+
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setIsUserFormOpen(true);
   };
 
   const handleAddGroup = () => {
-    // In a real app, would show a form modal or navigate to form page
-    console.log("Add group clicked");
+    setSelectedGroup(undefined);
+    setIsGroupFormOpen(true);
+  };
+
+  const handleEditGroup = (group: UserGroup) => {
+    setSelectedGroup(group);
+    setIsGroupFormOpen(true);
   };
 
   return (
@@ -96,7 +112,11 @@ export default function Users() {
                         <Badge variant={user.isActive ? "default" : "secondary"}>
                           {user.role}
                         </Badge>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEditUser(user)}
+                        >
                           Editar
                         </Button>
                       </div>
@@ -136,7 +156,11 @@ export default function Users() {
                         {group.description || "Sem descrição"}
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEditGroup(group)}
+                    >
                       Gerenciar
                     </Button>
                   </div>
@@ -146,6 +170,18 @@ export default function Users() {
           </Card>
         </div>
       </div>
+      {/* Modais de formulário */}
+      <UserForm 
+        isOpen={isUserFormOpen} 
+        onClose={() => setIsUserFormOpen(false)}
+        user={selectedUser}
+      />
+      
+      <UserGroupForm 
+        isOpen={isGroupFormOpen} 
+        onClose={() => setIsGroupFormOpen(false)}
+        userGroup={selectedGroup}
+      />
     </MainLayout>
   );
 }
